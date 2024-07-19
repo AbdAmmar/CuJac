@@ -9,7 +9,10 @@
 #include "comm_kernel.cuh"
 
 
+
+
 int main() {
+
 
     int n;
     int ntx, nty;
@@ -17,6 +20,7 @@ int main() {
     int n_Threads, n_Blocks, n_Workers;
 
     size_t size_u;
+    size_t size_err;
 
     int i, j, ii, jj, jj0, jj1, l;
     int it, it_max, it_print;
@@ -27,7 +31,8 @@ int main() {
     double* d_u;
     double* d_unew;
 
-    double* d_err_i;
+    double* d_err;
+    double* h_err;
     double err;
 
     FILE *fptr;
@@ -104,14 +109,22 @@ int main() {
     size_u = ntx * nty * sizeof(double);
     printf("Size of d_u = %zu Bytes \n\n", size_u);
 
+    size_err = n_Blocks * sizeof(double);
+    printf("Size of d_err = %zu Bytes \n\n", size_err);
 
     checkCudaErrors(cudaMalloc(&d_u, size_u), "cudaMalloc");
     checkCudaErrors(cudaMalloc(&d_unew, size_u), "cudaMalloc");
-    //cudaMalloc(&d_err_i, n_Workers * sizeof(double));
+    checkCudaErrors(cudaMalloc(&d_err, size_err), "cudaMalloc");
 
     h_u = (double*) malloc(size_u);
     if(h_u == NULL) {
         fprintf(stderr, "Memory allocation failed for h_u\n");
+        exit(0);
+    }
+
+    h_err = (double*) malloc(size_err);
+    if(h_err == NULL) {
+        fprintf(stderr, "Memory allocation failed for h_err\n");
         exit(0);
     }
 
@@ -150,6 +163,21 @@ int main() {
         communication<<<n_Blocks, n_Threads>>>(ntx, nty_local, n_Workers, d_u);
         cudaDeviceSynchronize();
 
+        max_error<<<n_Blocks, n_Threads, size_err>>>(ntx, nty, nty_local, n_Workers, h, d_u, d_err);
+        cudaDeviceSynchronize();
+
+        cudaMemcpy(h_err, d_err, size_err, cudaMemcpyDeviceToHost);
+        err = h_err[0];
+        for (i = 1; i < n_Blocks; i++) {
+            if(err < h_err[i]) {
+                err = h_err[i];
+            }
+        }
+
+        if(it%it_print == 0) {
+            printf("it = %d/%d, error = %f\n", it, it_max, err);
+        }
+
         it++;
     }
 
@@ -159,7 +187,7 @@ int main() {
     
     cudaFree(d_u);
     cudaFree(d_unew);
-    //cudaFree(d_err_i);
+    cudaFree(d_err);
     
     for(l = 0; l < n_Workers; l++){
         jj0 = l * nty_local;
@@ -177,6 +205,7 @@ int main() {
 
     //printf("%f  \n", h_u[0]);
     free(h_u);
+    free(h_err);
 
     return 0;
 }

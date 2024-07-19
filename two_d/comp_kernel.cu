@@ -8,15 +8,11 @@ __global__ void compute(int ntx, int nty, int nty_local, int n_Workers, double h
     int l, ll;
     int j, jj0, jj1, jj2, jy;
 
-    size_t size_tmp;
-
     double x, y, h2;
 
     tid = threadIdx.x + blockIdx.x * blockDim.x;
 
     h2 = h * h;
-
-    size_tmp = ntx * nty_local * sizeof(double);
 
     while (tid < n_Workers) {
 
