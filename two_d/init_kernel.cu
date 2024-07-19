@@ -15,7 +15,7 @@ __global__ void init(int ntx, int nty_local, int n_Workers, double *u) {
 
             for(l = 0; l < ntx; l++) {
 
-                u[l + jj1] = 1.0;
+                u[l + jj1] = 0.0;
 
             }
         }

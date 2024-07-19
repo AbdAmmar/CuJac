@@ -1,5 +1,5 @@
 8        # n
 1        # n_Threads
 1        # n_Blocks
-10000    # it_max
-1000     # it_print
+50       # it_max
+100      # it_print
