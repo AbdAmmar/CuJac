@@ -12,7 +12,7 @@ void checkCudaErrors(cudaError_t err, const char* msg) {
 
 
 
-__global__ void max_error(int ntx, int nty, int nty_local, int n_Workers, double h, double *u, double *err) {
+__global__ void max_error(int ntx, int nty, int nty_local, int streamSize, double h, double *u, double *err) {
 
     extern __shared__ double cache[];
 
@@ -29,7 +29,7 @@ __global__ void max_error(int ntx, int nty, int nty_local, int n_Workers, double
     cacheIndex = threadIdx.x;
     err_local = 0.0;
 
-    while (tid < n_Workers) {
+    while (tid < streamSize) {
 
         jj0 = nty_local * tid;
         jy = jj0 - 2 * tid - 1;

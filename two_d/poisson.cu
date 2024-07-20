@@ -17,7 +17,7 @@ int main() {
     int n;
     int ntx, nty;
     int nty_local;
-    int blockSize, n_Blocks, n_Workers;
+    int blockSize, n_Blocks, streamSize;
 
     size_t size_u;
     size_t size_err;
@@ -65,9 +65,9 @@ int main() {
         }
 
         if(fgets(readString, 100, fptr) != NULL) {
-            n_Blocks = atoi(readString);
+            streamSize = atoi(readString);
         } else {
-            printf("Not able to read n_Blocks\n");
+            printf("Not able to read streamSize\n");
         }
 
         if(fgets(readString, 100, fptr) != NULL) {
@@ -102,16 +102,16 @@ int main() {
     printf("step = %f\n\n", h);
 
 
-    n_Workers = blockSize * n_Blocks;
-    printf("nb on threads = %d\n", blockSize);
-    printf("nb on blocks = %d\n", n_Blocks);
-    printf("nb on workers = %d\n", n_Workers);
+    n_Blocks = (streamSize + blockSize - 1) / blockSize;
+    printf("size of stream = %d\n", streamSize);
+    printf("size of blocks = %d\n", blockSize);
+    printf("nb on blocks = %d\n\n", n_Blocks);
 
 
     ntx = n;
-    nty = n + 2*n_Workers;
-    nty_local = n / n_Workers + 2;
-    if((nty_local*n_Workers - nty) != 0) {
+    nty = n + 2*streamSize;
+    nty_local = n / streamSize + 2;
+    if((nty_local*streamSize - nty) != 0) {
         printf("Unconsistent dimensions\n");
         exit(0);
     }
@@ -137,33 +137,33 @@ int main() {
     }
 
 
-    init<<<n_Blocks, blockSize>>>(ntx, nty_local, n_Workers, d_u);
+    init<<<n_Blocks, blockSize>>>(ntx, nty_local, streamSize, d_u);
     cudaDeviceSynchronize();
 
     it = 1;
     while(it <= it_max) {
 
-        //compute<<<n_Blocks, blockSize>>>(ntx, nty, nty_local, n_Workers, h, d_u, d_unew);
+        //compute<<<n_Blocks, blockSize>>>(ntx, nty, nty_local, streamSize, h, d_u, d_unew);
         //cudaDeviceSynchronize();
-        //naivecopy<<<n_Blocks, blockSize>>>(ntx, nty, nty_local, n_Workers, d_unew, d_u);
+        //naivecopy<<<n_Blocks, blockSize>>>(ntx, nty, nty_local, streamSize, d_unew, d_u);
         //cudaDeviceSynchronize();
-        //communication<<<n_Blocks, blockSize>>>(ntx, nty_local, n_Workers, d_u);
+        //communication<<<n_Blocks, blockSize>>>(ntx, nty_local, streamSize, d_u);
         //cudaDeviceSynchronize();
 
         if(it%2 != 0) {
-            compute<<<n_Blocks, blockSize>>>(ntx, nty, nty_local, n_Workers, h, d_u, d_unew);
+            compute<<<n_Blocks, blockSize>>>(ntx, nty, nty_local, streamSize, h, d_u, d_unew);
             cudaDeviceSynchronize();
-            communication<<<n_Blocks, blockSize>>>(ntx, nty_local, n_Workers, d_unew);
+            communication<<<n_Blocks, blockSize>>>(ntx, nty_local, streamSize, d_unew);
             cudaDeviceSynchronize();
         } else {
-            compute<<<n_Blocks, blockSize>>>(ntx, nty, nty_local, n_Workers, h, d_unew, d_u);
+            compute<<<n_Blocks, blockSize>>>(ntx, nty, nty_local, streamSize, h, d_unew, d_u);
             cudaDeviceSynchronize();
-            communication<<<n_Blocks, blockSize>>>(ntx, nty_local, n_Workers, d_u);
+            communication<<<n_Blocks, blockSize>>>(ntx, nty_local, streamSize, d_u);
             cudaDeviceSynchronize();
         }
 
         if(it%it_print == 0) {
-            max_error<<<n_Blocks, blockSize, size_err>>>(ntx, nty, nty_local, n_Workers, h, d_u, d_err);
+            max_error<<<n_Blocks, blockSize, size_err>>>(ntx, nty, nty_local, streamSize, h, d_u, d_err);
             cudaDeviceSynchronize();
             cudaMemcpy(h_err, d_err, size_err, cudaMemcpyDeviceToHost);
             err = h_err[0];
@@ -186,7 +186,7 @@ int main() {
     //    exit(0);
     //}
     //checkCudaErrors(cudaMemcpy(h_u, d_unew, size_u, cudaMemcpyDeviceToHost), "cudaMemcpy");
-    //for(l = 0; l < n_Workers; l++){
+    //for(l = 0; l < streamSize; l++){
     //    jj0 = l * nty_local;
     //    for (j = 1; j < nty_local-1; j++) {
     //        jj1 = (jj0 + j) * ntx;

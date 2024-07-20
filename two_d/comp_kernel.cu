@@ -1,7 +1,7 @@
 
 
 
-__global__ void compute(int ntx, int nty, int nty_local, int n_Workers, double h, double *u, double *u_new) {
+__global__ void compute(int ntx, int nty, int nty_local, int streamSize, double h, double *u, double *u_new) {
 
     int tid;
 
@@ -14,7 +14,7 @@ __global__ void compute(int ntx, int nty, int nty_local, int n_Workers, double h
 
     h2 = h * h;
 
-    while (tid < n_Workers) {
+    while (tid < streamSize) {
 
         jj0 = nty_local * tid;
 
