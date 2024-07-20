@@ -38,6 +38,21 @@ int main() {
     FILE *fptr;
     char readString[100];
 
+    int nDevices;
+    cudaDeviceProp prop;
+    cudaError_t err_cuda;
+
+    err_cuda = cudaGetDeviceCount(&nDevices);
+    if(err_cuda != cudaSuccess) printf("%s\n", cudaGetErrorString(err_cuda));
+    for (i = 0; i < nDevices; i++) {
+        cudaGetDeviceProperties(&prop, i);
+        printf("Device: %d/%d\n", i+1, nDevices);
+        printf("  Device name: %s\n", prop.name);
+        printf("  Memory Clock Rate (GHz): %f\n", prop.memoryClockRate/1.0e6);
+        printf("  Memory Bus Width (bits): %d\n", prop.memoryBusWidth);
+        printf("  Peak Memory Bandwidth (GB/s): %f\n\n", 2.0*prop.memoryClockRate*(prop.memoryBusWidth/8)/1.0e6);
+    }
+
     //n = 4096;
     //n_Threads = 1;
     //n_Blocks = 1;
