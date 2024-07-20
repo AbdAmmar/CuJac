@@ -1,5 +1,5 @@
 
-__global__ void init(int ntx, int nty_local, int streamSize, double *u) {
+__global__ void init(int ntx, int nty_local, int nWorkers, double *u) {
 
 
     int tid;
@@ -7,7 +7,7 @@ __global__ void init(int ntx, int nty_local, int streamSize, double *u) {
 
     tid = threadIdx.x + blockIdx.x * blockDim.x;
 
-    while (tid < streamSize) {
+    while (tid < nWorkers) {
 
         for(j = 0; j < nty_local; j++) {
 

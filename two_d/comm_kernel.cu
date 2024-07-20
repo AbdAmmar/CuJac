@@ -1,5 +1,5 @@
 
-__global__ void communication(int ntx, int nty_local, int streamSize, double *u) {
+__global__ void communication(int ntx, int nty_local, int nWorkers, double *u) {
 
 
     int tid;
@@ -9,7 +9,7 @@ __global__ void communication(int ntx, int nty_local, int streamSize, double *u)
 
     tid = threadIdx.x + blockIdx.x * blockDim.x;
 
-    while (tid < streamSize) {
+    while (tid < nWorkers) {
 
         jj0 = nty_local * tid;
 
@@ -29,7 +29,7 @@ __global__ void communication(int ntx, int nty_local, int streamSize, double *u)
 
 
 
-__global__ void naivecopy(int ntx, int nty, int nty_local, int streamSize, double*u_old, double *u_new) {
+__global__ void naivecopy(int ntx, int nty, int nty_local, int nWorkers, double*u_old, double *u_new) {
 
     int tid;
     int l, ll;
@@ -37,7 +37,7 @@ __global__ void naivecopy(int ntx, int nty, int nty_local, int streamSize, doubl
 
     tid = threadIdx.x + blockIdx.x * blockDim.x;
 
-    while (tid < streamSize) {
+    while (tid < nWorkers) {
 
         jj0 = nty_local * tid;
 

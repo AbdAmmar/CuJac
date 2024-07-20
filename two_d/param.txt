@@ -1,5 +1,6 @@
-256       # n
-32        # streamSize
+243       # n
+1         # nStream
+64        # streamSize
 32        # blockSize
 10000     # it_max
 2000      # it_print
