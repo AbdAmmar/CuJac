@@ -1,5 +1,5 @@
 256       # n
-32        # n_Threads
 1         # n_Blocks
+32        # blockSize
 10000     # it_max
 2000      # it_print

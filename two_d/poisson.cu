@@ -17,7 +17,7 @@ int main() {
     int n;
     int ntx, nty;
     int nty_local;
-    int n_Threads, n_Blocks, n_Workers;
+    int blockSize, n_Blocks, n_Workers;
 
     size_t size_u;
     size_t size_err;
@@ -65,15 +65,15 @@ int main() {
         }
 
         if(fgets(readString, 100, fptr) != NULL) {
-            n_Threads = atoi(readString);
-        } else {
-            printf("Not able to read n_Threads\n");
-        }
-
-        if(fgets(readString, 100, fptr) != NULL) {
             n_Blocks = atoi(readString);
         } else {
             printf("Not able to read n_Blocks\n");
+        }
+
+        if(fgets(readString, 100, fptr) != NULL) {
+            blockSize = atoi(readString);
+        } else {
+            printf("Not able to read blockSize\n");
         }
 
         if(fgets(readString, 100, fptr) != NULL) {
@@ -102,8 +102,8 @@ int main() {
     printf("step = %f\n\n", h);
 
 
-    n_Workers = n_Threads * n_Blocks;
-    printf("nb on threads = %d\n", n_Threads);
+    n_Workers = blockSize * n_Blocks;
+    printf("nb on threads = %d\n", blockSize);
     printf("nb on blocks = %d\n", n_Blocks);
     printf("nb on workers = %d\n", n_Workers);
 
@@ -137,33 +137,33 @@ int main() {
     }
 
 
-    init<<<n_Blocks, n_Threads>>>(ntx, nty_local, n_Workers, d_u);
+    init<<<n_Blocks, blockSize>>>(ntx, nty_local, n_Workers, d_u);
     cudaDeviceSynchronize();
 
     it = 1;
     while(it <= it_max) {
 
-        //compute<<<n_Blocks, n_Threads>>>(ntx, nty, nty_local, n_Workers, h, d_u, d_unew);
+        //compute<<<n_Blocks, blockSize>>>(ntx, nty, nty_local, n_Workers, h, d_u, d_unew);
         //cudaDeviceSynchronize();
-        //naivecopy<<<n_Blocks, n_Threads>>>(ntx, nty, nty_local, n_Workers, d_unew, d_u);
+        //naivecopy<<<n_Blocks, blockSize>>>(ntx, nty, nty_local, n_Workers, d_unew, d_u);
         //cudaDeviceSynchronize();
-        //communication<<<n_Blocks, n_Threads>>>(ntx, nty_local, n_Workers, d_u);
+        //communication<<<n_Blocks, blockSize>>>(ntx, nty_local, n_Workers, d_u);
         //cudaDeviceSynchronize();
 
         if(it%2 != 0) {
-            compute<<<n_Blocks, n_Threads>>>(ntx, nty, nty_local, n_Workers, h, d_u, d_unew);
+            compute<<<n_Blocks, blockSize>>>(ntx, nty, nty_local, n_Workers, h, d_u, d_unew);
             cudaDeviceSynchronize();
-            communication<<<n_Blocks, n_Threads>>>(ntx, nty_local, n_Workers, d_unew);
+            communication<<<n_Blocks, blockSize>>>(ntx, nty_local, n_Workers, d_unew);
             cudaDeviceSynchronize();
         } else {
-            compute<<<n_Blocks, n_Threads>>>(ntx, nty, nty_local, n_Workers, h, d_unew, d_u);
+            compute<<<n_Blocks, blockSize>>>(ntx, nty, nty_local, n_Workers, h, d_unew, d_u);
             cudaDeviceSynchronize();
-            communication<<<n_Blocks, n_Threads>>>(ntx, nty_local, n_Workers, d_u);
+            communication<<<n_Blocks, blockSize>>>(ntx, nty_local, n_Workers, d_u);
             cudaDeviceSynchronize();
         }
 
         if(it%it_print == 0) {
-            max_error<<<n_Blocks, n_Threads, size_err>>>(ntx, nty, nty_local, n_Workers, h, d_u, d_err);
+            max_error<<<n_Blocks, blockSize, size_err>>>(ntx, nty, nty_local, n_Workers, h, d_u, d_err);
             cudaDeviceSynchronize();
             cudaMemcpy(h_err, d_err, size_err, cudaMemcpyDeviceToHost);
             err = h_err[0];
