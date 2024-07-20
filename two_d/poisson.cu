@@ -22,12 +22,11 @@ int main() {
     size_t size_u;
     size_t size_err;
 
-    int i, j, ii, jj, jj0, jj1, l;
+    int i;
     int it, it_max, it_print;
 
     double L, h;
 
-    double* h_u;
     double* d_u;
     double* d_unew;
 
@@ -42,6 +41,8 @@ int main() {
     cudaDeviceProp prop;
     cudaError_t err_cuda;
 
+
+
     err_cuda = cudaGetDeviceCount(&nDevices);
     if(err_cuda != cudaSuccess) printf("%s\n", cudaGetErrorString(err_cuda));
     for (i = 0; i < nDevices; i++) {
@@ -53,9 +54,7 @@ int main() {
         printf("  Peak Memory Bandwidth (GB/s): %f\n\n", 2.0*prop.memoryClockRate*(prop.memoryBusWidth/8)/1.0e6);
     }
 
-    //n = 4096;
-    //n_Threads = 1;
-    //n_Blocks = 1;
+
     fptr = fopen("param.txt", "r");
     if(fptr != NULL) {
 
@@ -131,12 +130,6 @@ int main() {
     checkCudaErrors(cudaMalloc(&d_unew, size_u), "cudaMalloc");
     checkCudaErrors(cudaMalloc(&d_err, size_err), "cudaMalloc");
 
-    h_u = (double*) malloc(size_u);
-    if(h_u == NULL) {
-        fprintf(stderr, "Memory allocation failed for h_u\n");
-        exit(0);
-    }
-
     h_err = (double*) malloc(size_err);
     if(h_err == NULL) {
         fprintf(stderr, "Memory allocation failed for h_err\n");
@@ -145,82 +138,75 @@ int main() {
 
 
     init<<<n_Blocks, n_Threads>>>(ntx, nty_local, n_Workers, d_u);
-    checkCudaErrors(cudaGetLastError(), "Kernel init launch failed");
     cudaDeviceSynchronize();
 
-    it = 0;
-    while(it < it_max) {
+    it = 1;
+    while(it <= it_max) {
 
-        //printf("it = %d/%d\n", it, it_max);
+        //compute<<<n_Blocks, n_Threads>>>(ntx, nty, nty_local, n_Workers, h, d_u, d_unew);
+        //cudaDeviceSynchronize();
+        //naivecopy<<<n_Blocks, n_Threads>>>(ntx, nty, nty_local, n_Workers, d_unew, d_u);
+        //cudaDeviceSynchronize();
+        //communication<<<n_Blocks, n_Threads>>>(ntx, nty_local, n_Workers, d_u);
+        //cudaDeviceSynchronize();
 
-        compute<<<n_Blocks, n_Threads>>>(ntx, nty, nty_local, n_Workers, h, d_u, d_unew);
-        checkCudaErrors(cudaGetLastError(), "Kernel compute launch failed");
-        cudaDeviceSynchronize();
-
-        //checkCudaErrors(cudaMemcpy(h_u, d_unew, size_u, cudaMemcpyDeviceToHost), "cudaMemcpy");
-        //for(l = 0; l < n_Workers; l++){
-        //    jj0 = l * nty_local;
-        //    for (j = 1; j < nty_local-1; j++) {
-        //        jj1 = (jj0 + j) * ntx;
-        //        for (i = 0; i < ntx; i++) {
-        //            ii = jj1 + i;
-        //            printf("%f  ", h_u[ii]);
-        //        }
-        //        printf("\n");
-        //    }
-        //    printf("\n");
-        //}
-        //printf("\n");
-
-        naivecopy<<<n_Blocks, n_Threads>>>(ntx, nty, nty_local, n_Workers, d_unew, d_u);
-        cudaDeviceSynchronize();
-
-        communication<<<n_Blocks, n_Threads>>>(ntx, nty_local, n_Workers, d_u);
-        cudaDeviceSynchronize();
-
-        max_error<<<n_Blocks, n_Threads, size_err>>>(ntx, nty, nty_local, n_Workers, h, d_u, d_err);
-        cudaDeviceSynchronize();
-
-        cudaMemcpy(h_err, d_err, size_err, cudaMemcpyDeviceToHost);
-        err = h_err[0];
-        for (i = 1; i < n_Blocks; i++) {
-            if(err < h_err[i]) {
-                err = h_err[i];
-            }
+        if(it%2 != 0) {
+            compute<<<n_Blocks, n_Threads>>>(ntx, nty, nty_local, n_Workers, h, d_u, d_unew);
+            cudaDeviceSynchronize();
+            communication<<<n_Blocks, n_Threads>>>(ntx, nty_local, n_Workers, d_unew);
+            cudaDeviceSynchronize();
+        } else {
+            compute<<<n_Blocks, n_Threads>>>(ntx, nty, nty_local, n_Workers, h, d_unew, d_u);
+            cudaDeviceSynchronize();
+            communication<<<n_Blocks, n_Threads>>>(ntx, nty_local, n_Workers, d_u);
+            cudaDeviceSynchronize();
         }
 
         if(it%it_print == 0) {
+            max_error<<<n_Blocks, n_Threads, size_err>>>(ntx, nty, nty_local, n_Workers, h, d_u, d_err);
+            cudaDeviceSynchronize();
+            cudaMemcpy(h_err, d_err, size_err, cudaMemcpyDeviceToHost);
+            err = h_err[0];
+            for (i = 1; i < n_Blocks; i++) {
+                if(err < h_err[i]) {
+                    err = h_err[i];
+                }
+            }
             printf("it = %d/%d, error = %f\n", it, it_max, err);
         }
 
         it++;
     }
 
+    //int l, j, ii, jj0, jj1;
+    //double* h_u;
+    //h_u = (double*) malloc(size_u);
+    //if(h_u == NULL) {
+    //    fprintf(stderr, "Memory allocation failed for h_u\n");
+    //    exit(0);
+    //}
+    //checkCudaErrors(cudaMemcpy(h_u, d_unew, size_u, cudaMemcpyDeviceToHost), "cudaMemcpy");
+    //for(l = 0; l < n_Workers; l++){
+    //    jj0 = l * nty_local;
+    //    for (j = 1; j < nty_local-1; j++) {
+    //        jj1 = (jj0 + j) * ntx;
+    //        for (i = 0; i < ntx; i++) {
+    //            ii = jj1 + i;
+    //            printf("%f  ", h_u[ii]);
+    //        }
+    //        printf("\n");
+    //    }
+    //    printf("\n");
+    //}
+    //printf("\n");
+    //free(h_u);
 
-    checkCudaErrors(cudaMemcpy(h_u, d_unew, size_u, cudaMemcpyDeviceToHost), "cudaMemcpy");
 
-    
+    free(h_err);
+
     cudaFree(d_u);
     cudaFree(d_unew);
     cudaFree(d_err);
-    
-    for(l = 0; l < n_Workers; l++){
-        jj0 = l * nty_local;
-        for (j = 1; j < nty_local-1; j++) {
-            jj1 = (jj0 + j) * ntx;
-            for (i = 0; i < ntx; i++) {
-                ii = jj1 + i;
-                printf("%f  ", h_u[ii]);
-            }
-            printf("\n");
-        }
-        printf("\n");
-    }
-    printf("\n");
-
-    //printf("%f  \n", h_u[0]);
-    free(h_u);
-    free(h_err);
 
     return 0;
 }

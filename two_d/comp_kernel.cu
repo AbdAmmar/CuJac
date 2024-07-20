@@ -32,7 +32,7 @@ __global__ void compute(int ntx, int nty, int nty_local, int n_Workers, double h
         
                 ll = jj1 + l;
         
-                u_new[ll] = 0.25 * (u[ll - 1] + u[ll + 1] + u[ll - ntx] + u[ll + ntx] - h2 * (2.0 * (x * (x - 1) + y * (y - 1))));
+                u_new[ll] = 0.25 * (u[ll - 1] + u[ll + 1] + u[ll - ntx] + u[ll + ntx] - h2 * (2.0 * (x * (x - 1.0) + y * (y - 1.0))));
             }
         }
         
@@ -40,7 +40,7 @@ __global__ void compute(int ntx, int nty, int nty_local, int n_Workers, double h
             jj1 = (jj0 + 1) * ntx;
             jj2 = jj1 - ntx;
             for(l = 0; l < ntx; l++) {
-                u_new[jj2 + l] = u[jj1 + l];
+                u_new[jj2 + l] = u_new[jj1 + l];
             }
         } else {
             for(l = 0; l < ntx; l++) {
@@ -52,7 +52,7 @@ __global__ void compute(int ntx, int nty, int nty_local, int n_Workers, double h
             jj1 = (jj0 + nty_local) * ntx;
             jj2 = jj1 - ntx;
             for(l = 0; l < ntx; l++) {
-                u_new[jj1 - l - 1] = u[jj2 - l - 1];
+                u_new[jj1 - l - 1] = u_new[jj2 - l - 1];
             }
         } else {
             jj1 = (nty - 1) * ntx;

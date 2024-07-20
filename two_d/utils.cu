@@ -1,7 +1,6 @@
 
 #include <iostream>
 
-const int threadsPerBlock = 256;
 
 
 void checkCudaErrors(cudaError_t err, const char* msg) {
@@ -15,7 +14,6 @@ void checkCudaErrors(cudaError_t err, const char* msg) {
 
 __global__ void max_error(int ntx, int nty, int nty_local, int n_Workers, double h, double *u, double *err) {
 
-    //__shared__ double cache[threadsPerBlock];
     extern __shared__ double cache[];
 
     int tid;
