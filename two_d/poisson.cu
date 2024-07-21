@@ -39,19 +39,27 @@ int main() {
 
     int nDevices;
     cudaDeviceProp prop;
-    cudaError_t err_cuda;
 
 
 
-    err_cuda = cudaGetDeviceCount(&nDevices);
-    if(err_cuda != cudaSuccess) printf("%s\n", cudaGetErrorString(err_cuda));
+    checkCudaErrors(cudaGetDeviceCount(&nDevices), "cudaGetDeviceCount)");
     for (i = 0; i < nDevices; i++) {
         cudaGetDeviceProperties(&prop, i);
         printf("Device: %d/%d\n", i+1, nDevices);
         printf("  Device name: %s\n", prop.name);
         printf("  Memory Clock Rate (GHz): %f\n", prop.memoryClockRate/1.0e6);
         printf("  Memory Bus Width (bits): %d\n", prop.memoryBusWidth);
-        printf("  Peak Memory Bandwidth (GB/s): %f\n\n", 2.0*prop.memoryClockRate*(prop.memoryBusWidth/8)/1.0e6);
+        printf("  Peak Memory Bandwidth (GB/s): %f\n", 2.0*prop.memoryClockRate*(prop.memoryBusWidth/8)/1.0e6);
+        printf("  Global Memory (GB): %f\n", prop.totalGlobalMem/8.0e9);
+        printf("  Constant Memory (Bytes): %zu\n", prop.totalConstMem);
+        printf("  Max mem pitch: %ld\n", prop.memPitch);
+        printf("  Texture Alignment: %ld\n", prop.textureAlignment);
+        printf("  Warp Size : %d\n", prop.warpSize);
+        printf("  Max Threads per Block: %d\n", prop.maxThreadsPerBlock);
+        printf("  Multiprocessor count: %d\n", prop.multiProcessorCount);
+        printf("  Shared mem per mp: %ld\n", prop.sharedMemPerBlock);
+        printf("  Registers per mp: %d\n", prop.regsPerBlock);
+        printf("  Compute capability: %d.%d\n\n", prop.major, prop.minor);
     }
 
 

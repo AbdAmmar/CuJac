@@ -1,18 +1,19 @@
 
 
 
-__global__ void compute(int ntx, int nty, int nty_local, int nWorkers, double h, double *u, double *u_new) {
+__global__ void compute(int ntx, int nty, int nty_local, int nWorkers, double h, double *u_old, double *u_new) {
 
     int tid;
 
     int l, ll;
     int j, jj0, jj1, jj2, jy;
 
-    double x, y, h2;
+    double x, y, y_tmp;
+
+    const double h_ct = 2.0 * h * h;
 
     tid = threadIdx.x + blockIdx.x * blockDim.x;
 
-    h2 = h * h;
 
     while (tid < nWorkers) {
 
@@ -23,6 +24,7 @@ __global__ void compute(int ntx, int nty, int nty_local, int nWorkers, double h,
         for(j = 1; j < nty_local-1; j++) {
         
             y = (double) (jy + j) * h;
+            y_tmp = y * (y - 1.0);
         
             jj1 = (jj0 + j) * ntx;
         
@@ -32,7 +34,8 @@ __global__ void compute(int ntx, int nty, int nty_local, int nWorkers, double h,
         
                 ll = jj1 + l;
         
-                u_new[ll] = 0.25 * (u[ll - 1] + u[ll + 1] + u[ll - ntx] + u[ll + ntx] - h2 * (2.0 * (x * (x - 1.0) + y * (y - 1.0))));
+                u_new[ll] = 0.25 * ( u_old[ll - 1] + u_old[ll + 1] + u_old[ll - ntx] + u_old[ll + ntx] 
+                                   - h_ct * (x * (x - 1.0) + y_tmp) ) ;
             }
         }
         
