@@ -3,14 +3,14 @@
 #SBATCH --ntasks=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:1
-#SBATCH --time=0:1:00
+#SBATCH --time=1:00:00
 #SBATCH -p small 
 #SBATCH --exclusive 
 
 
 module purge
 module load openmpi/nvidia/4.1.6-opt
-module list
+#module list
 
 #echo "=========================="
 #echo "Compile poisson"
