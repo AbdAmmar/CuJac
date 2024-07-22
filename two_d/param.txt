@@ -1,6 +1,5 @@
 2048      # n
-1         # nStream
-1024      # streamSize
+32        # nBlocks
 32        # blockSize
 10000     # it_max
 2000      # it_print

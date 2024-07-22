@@ -17,7 +17,7 @@ int main() {
     int n;
     int ntx, nty;
     int nty_local;
-    int blockSize, n_Blocks, streamSize, nWorkers, nStreams;
+    int blockSize, nBlocks, nWorkers;
 
     size_t size_u;
     size_t size_err;
@@ -73,15 +73,9 @@ int main() {
         }
 
         if(fgets(readString, 100, fptr) != NULL) {
-            nStreams = atoi(readString);
+            nBlocks = atoi(readString);
         } else {
-            printf("Not able to read nStreams\n");
-        }
-
-        if(fgets(readString, 100, fptr) != NULL) {
-            streamSize = atoi(readString);
-        } else {
-            printf("Not able to read streamSize\n");
+            printf("Not able to read nBlocks\n");
         }
 
         if(fgets(readString, 100, fptr) != NULL) {
@@ -116,15 +110,12 @@ int main() {
     printf("step = %f\n\n", h);
 
 
-    n_Blocks = (streamSize + blockSize - 1) / blockSize;
-    nWorkers = streamSize * nStreams;
-    printf("nb of streams = %d\n", nStreams);
-    printf("size of stream = %d\n", streamSize);
+    nWorkers = nBlocks * blockSize;
+    printf("nb of blocks = %d\n", nBlocks);
     printf("size of blocks = %d\n", blockSize);
-    printf("nb of blocks = %d\n", n_Blocks);
     printf("nb of workers = %d\n\n", nWorkers);
     if(nWorkers > n) {
-        printf("increase n, or decrease nStreams and/or streamSize");
+        printf("increase n, or decrease nBlocks and/or blockSize");
         exit(0);
     }
 
@@ -146,7 +137,7 @@ int main() {
     size_u = ntx * nty * sizeof(double);
     printf("Size of d_u = %zu Bytes \n\n", size_u);
 
-    size_err = n_Blocks * sizeof(double);
+    size_err = nBlocks * sizeof(double);
     printf("Size of d_err = %zu Bytes \n\n", size_err);
 
     checkCudaErrors(cudaMalloc(&d_u, size_u), "cudaMalloc");
@@ -160,59 +151,30 @@ int main() {
     }
 
 
-    //cudaEvent_t startEvent, stopEvent, dummyEvent;
-    //cudaStream_t stream[nStreams];
-    //cudaEventCreate(&startEvent);
-    //cudaEventCreate(&stopEvent);
-    //cudaEventCreate(&dummyEvent);
-    //for (int i = 0; i < nStreams; ++i)
-    //    cudaStreamCreate(&stream[i]);
-
-    //for (int i = 0; i < nStreams; i++) {
-    //    init<<<n_Blocks, blockSize, 0, stream[i]>>>(ntx, nty_local, nWorkers, d_u);
-    //    cudaStreamSynchronize(stream[i]);
-    //}
-
-    init<<<n_Blocks, blockSize>>>(ntx, nty_local, nWorkers, d_u);
+    init<<<nBlocks, blockSize>>>(ntx, nty_local, nWorkers, d_u);
     cudaDeviceSynchronize();
 
     it = 1;
     while(it <= it_max) {
 
         if(it%2 != 0) {
-            compute<<<n_Blocks, blockSize>>>(ntx, nty, nty_local, nWorkers, h, d_u, d_unew);
+            compute<<<nBlocks, blockSize>>>(ntx, nty, nty_local, nWorkers, h, d_u, d_unew);
             cudaDeviceSynchronize();
-            communication<<<n_Blocks, blockSize>>>(ntx, nty_local, nWorkers, d_unew);
+            communication<<<nBlocks, blockSize>>>(ntx, nty_local, nWorkers, d_unew);
             cudaDeviceSynchronize();
         } else {
-            compute<<<n_Blocks, blockSize>>>(ntx, nty, nty_local, nWorkers, h, d_unew, d_u);
+            compute<<<nBlocks, blockSize>>>(ntx, nty, nty_local, nWorkers, h, d_unew, d_u);
             cudaDeviceSynchronize();
-            communication<<<n_Blocks, blockSize>>>(ntx, nty_local, nWorkers, d_u);
+            communication<<<nBlocks, blockSize>>>(ntx, nty_local, nWorkers, d_u);
             cudaDeviceSynchronize();
         }
 
-        //if(it%2 != 0) {
-        //    for (int i = 0; i < nStreams; i++) {
-        //        compute<<<n_Blocks, blockSize, 0, stream[i]>>>(ntx, nty, nty_local, nWorkers, h, d_u, d_unew);
-        //        cudaStreamSynchronize(stream[i]);
-        //        communication<<<n_Blocks, blockSize, 0, stream[i]>>>(ntx, nty_local, nWorkers, d_unew);
-        //        cudaStreamSynchronize(stream[i]);
-        //    }
-        //} else {
-        //    for (int i = 0; i < nStreams; i++) {
-        //        compute<<<n_Blocks, blockSize, 0, stream[i]>>>(ntx, nty, nty_local, nWorkers, h, d_unew, d_u);
-        //        cudaStreamSynchronize(stream[i]);
-        //        communication<<<n_Blocks, blockSize, 0, stream[i]>>>(ntx, nty_local, nWorkers, d_u);
-        //        cudaStreamSynchronize(stream[i]);
-        //    }
-        //}
-
         if(it%it_print == 0) {
-            max_error<<<n_Blocks, blockSize, size_err>>>(ntx, nty, nty_local, nWorkers, h, d_u, d_err);
+            max_error<<<nBlocks, blockSize, size_err>>>(ntx, nty, nty_local, nWorkers, h, d_u, d_err);
             cudaDeviceSynchronize();
             checkCudaErrors(cudaMemcpy(h_err, d_err, size_err, cudaMemcpyDeviceToHost), "cudaMemcpy");
             err = h_err[0];
-            for (i = 1; i < n_Blocks; i++) {
+            for (i = 1; i < nBlocks; i++) {
                 if(err < h_err[i]) {
                     err = h_err[i];
                 }
@@ -249,8 +211,6 @@ int main() {
 
     free(h_err);
 
-    //for (int i = 0; i < nStreams; ++i)
-    //    cudaStreamDestroy(stream[i]);
 
     cudaFree(d_u);
     cudaFree(d_unew);
