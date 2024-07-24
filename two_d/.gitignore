@@ -2,3 +2,5 @@
 poisson
 *.o
 slurm-*
+
+RES/

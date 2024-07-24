@@ -11,12 +11,12 @@
 
 
 
+
 int main() {
 
 
     int n;
-    int ntx, nty;
-    int nty_local;
+    int ntx, nty, nty_local;
     int blockSize, nBlocks, nWorkers;
 
     size_t size_u;
@@ -41,12 +41,18 @@ int main() {
     cudaDeviceProp prop;
 
 
-
+    nDevices = 0;
     checkCudaErrors(cudaGetDeviceCount(&nDevices), "cudaGetDeviceCount)");
+    if(nDevices == 0) {
+        printf("no available GPU(s)\n");
+        exit(0);
+    } else {
+        printf("Detected %d GPU(s)\n", nDevices);
+    }
     for (i = 0; i < nDevices; i++) {
         cudaGetDeviceProperties(&prop, i);
-        printf("Device: %d/%d\n", i+1, nDevices);
-        printf("  Device name: %s\n", prop.name);
+        printf("\nDevice %d/%d: \"%s\"\n", i+1, nDevices, prop.name);
+        printf("  Compute capability: %d.%d\n", prop.major, prop.minor);
         printf("  Memory Clock Rate (GHz): %f\n", prop.memoryClockRate/1.0e6);
         printf("  Memory Bus Width (bits): %d\n", prop.memoryBusWidth);
         printf("  Peak Memory Bandwidth (GB/s): %f\n", 2.0*prop.memoryClockRate*(prop.memoryBusWidth/8)/1.0e6);
@@ -58,8 +64,7 @@ int main() {
         printf("  Max Threads per Block: %d\n", prop.maxThreadsPerBlock);
         printf("  Multiprocessor count: %d\n", prop.multiProcessorCount);
         printf("  Shared mem per mp: %ld\n", prop.sharedMemPerBlock);
-        printf("  Registers per mp: %d\n", prop.regsPerBlock);
-        printf("  Compute capability: %d.%d\n\n", prop.major, prop.minor);
+        printf("  Registers per mp: %d\n\n", prop.regsPerBlock);
     }
 
 
@@ -149,6 +154,9 @@ int main() {
         fprintf(stderr, "Memory allocation failed for h_err\n");
         exit(0);
     }
+
+
+
 
 
     init<<<nBlocks, blockSize>>>(ntx, nty_local, nWorkers, d_u);
