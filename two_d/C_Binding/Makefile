@@ -47,6 +47,6 @@ $(BUILD_DIR_LOCAL)/%.o: $(SRC_DIR_LOCAL)/%.c
 
 .PHONY: clean
 clean:
-	rm $(BUILD_DIR_LOCAL)/*.o $(BIN_DIR_LOCAL)/poisson
+	rm $(BUILD_DIR_LOCAL)/*.o $(TARGET)
 
 

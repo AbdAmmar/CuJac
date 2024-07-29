@@ -1,5 +1,5 @@
 2048      # n
-32        # nBlocks
+64        # nBlocks
 32        # blockSize
 10000     # it_max
 2000      # it_print

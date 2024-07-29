@@ -1,8 +1,8 @@
 
-
 NVCC = nvcc
 NFLAGS = -O2 --compiler-options '-fPIC'
 NLDFLAGS = --shared
+
 
 CC = gcc
 CFLAGS = -fPIC -O3#-O0 -g -Wall -ggdb
@@ -12,59 +12,66 @@ FFLAGS = -O3#-O0 -g -Wall -ggdb
 
 
 
-# CUDA options
-CUDA_LIBS = -lcudart -lstdc++
+PATH_CU = $(CuJac_PATH)/two_d
+
+SRC_DIR = $(PATH_CU)/src_cu
+INC_DIR = $(PATH_CU)/include_cu
+
+SRC_DIR_LOCAL = src
+INC_DIR_LOCAL = include
+BIN_DIR_LOCAL = bin
+BUILD_DIR_LOCAL = build
+$(shell mkdir -p $(BIN_DIR_LOCAL))
+$(shell mkdir -p $(BUILD_DIR_LOCAL))
+
+
+KERNEL_SRC = $(wildcard $(SRC_DIR)/*.cu)
+KERNEL_OBJ = $(KERNEL_SRC:$(SRC_DIR)/%.cu=$(BUILD_DIR_LOCAL)/%.o)
+
+C_SRC_LOCAL = $(wildcard $(SRC_DIR_LOCAL)/*.c)
+C_OBJ_LOCAL = $(C_SRC_LOCAL:$(SRC_DIR_LOCAL)/%.c=$(BUILD_DIR_LOCAL)/%.o)
+
+LIBCU = $(BUILD_DIR_LOCAL)/libpoisson_cu.so
+MY_LIBS = -lpoisson_cu
+
+F_SRC_LOCAL = $(wildcard $(SRC_DIR_LOCAL)/*.f90)
+F_OBJ_LOCAL = $(F_SRC_LOCAL:$(SRC_DIR_LOCAL)/%.f90=$(BUILD_DIR_LOCAL)/%.o)
+
+MOD_SRC_LOCAL = $(wildcard $(SRC_DIR_LOCAL)/*.F90)
+MOD_OBJ_LOCAL = $(MOD_SRC_LOCAL:$(SRC_DIR_LOCAL)/%.F90=$(BUILD_DIR_LOCAL)/%.o)
+
+
+
+CUDA_LIBS = -lcudart
 CUDA_LIBDIR = /usr/local/nvidia/nvhpc/Linux_aarch64/22.9/cuda/lib64
 CUDA_INCDIR = /usr/local/nvidia/nvhpc/Linux_aarch64/22.9/cuda/include
 
 
+TARGET = $(BIN_DIR_LOCAL)/poisson
 
-# Directories
-SRC_DIR = src
-OBJ_DIR = build
-$(shell mkdir -p $(OBJ_DIR))
+$(TARGET): $(LIBCU) $(MOD_OBJ_LOCAL) $(F_OBJ_LOCAL)
+	$(FC) $(FFLAGS) $(KERNEL_OBJ) $(C_OBJ_LOCAL) $(F_OBJ_LOCAL) -o $@ $(CUDA_LIBS) $(MY_LIBS) -L$(CUDA_LIBDIR) -L$(BUILD_DIR_LOCAL) -Wl,-rpath,$(BUILD_DIR_LOCAL)
 
+$(LIBCU): $(KERNEL_OBJ) $(C_OBJ_LOCAL)
+	$(NVCC) $(NFLAGS) $(NLDFLAGS) $< -o $@ 
 
-KERNEL_SRC = $(SRC_DIR)/utils.cu $(SRC_DIR)/init_kernel.cu $(SRC_DIR)/comp_kernel.cu $(SRC_DIR)/comm_kernel.cu
-KERNEL_OBJ = $(OBJ_DIR)/utils.o $(OBJ_DIR)/init_kernel.o $(OBJ_DIR)/comp_kernel.o $(OBJ_DIR)/comm_kernel.o
+$(BUILD_DIR_LOCAL)/%.o: $(SRC_DIR)/%.cu
+	$(NVCC) $(NFLAGS) -c $< -o $@ -I$(INC_DIR)
 
-C_SRC = poisson_c.c
-C_OBJ = $(OBJ_DIR)/poisson_c.o
+$(BUILD_DIR_LOCAL)/%.o: $(SRC_DIR_LOCAL)/%.c
+	$(CC) $(CFLAGS) -c $< -o $@ -I$(CUDA_INCDIR) -I$(INC_DIR) -I$(INC_DIR_LOCAL)
 
-LIBCU = $(OBJ_DIR)/libpoisson_cu.so
-MY_LIBS = -lpoisson_cu
+$(BUILD_DIR_LOCAL)/%.o: $(SRC_DIR_LOCAL)/%.F90
+	$(FC) $(FFLAGS) -c $< -o $@ -J$(BUILD_DIR_LOCAL)
 
-F_SRC = gpu_module.F90
-F_OBJ = $(OBJ_DIR)/gpu_module.o
-
-MAIN_SRC = poisson_f.f90
-MAIN_OBJ = $(OBJ_DIR)/poisson_f.o
+$(BUILD_DIR_LOCAL)/%.o: $(SRC_DIR_LOCAL)/%.f90
+	$(FC) $(FFLAGS) -c $< -o $@ -J$(BUILD_DIR_LOCAL)
 
 
-
-TARGET = poisson
-
-$(TARGET): $(LIBCU) $(F_OBJ) $(MAIN_OBJ)
-	$(FC) $(MAIN_OBJ) $(F_OBJ) -o $(TARGET) $(CUDA_LIBS) $(MY_LIBS) -L$(CUDA_LIBDIR) -L$(OBJ_DIR) -Wl,-rpath,$(OBJ_DIR)
-
-$(LIBCU): $(KERNEL_OBJ) $(C_OBJ)
-	$(NVCC) $(NFLAGS) $(NLDFLAGS) -o $(LIBCU) $(KERNEL_OBJ) $(C_OBJ)
-
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cu
-	$(NVCC) $(NFLAGS) -c $< -o $@
-
-$(C_OBJ): $(C_SRC)
-	$(CC) $(CFLAGS) -I$(CUDA_INCDIR) -I$(SRC_DIR) -c $(C_SRC) -o $(C_OBJ)
-
-$(F_OBJ): $(F_SRC)
-	$(FC) $(FFLAGS) -c $(F_SRC) -o $(F_OBJ) -J$(OBJ_DIR)
-
-$(MAIN_OBJ): $(MAIN_SRC)
-	$(FC) $(FFLAGS) -c $(MAIN_SRC) -o $(MAIN_OBJ) -J$(OBJ_DIR)
 
 .PHONY: clean
 clean:
-	rm -f $(OBJ_DIR)/*.o $(OBJ_DIR)/*.so $(OBJ_DIR)/*.mod $(TARGET)
+	rm $(BUILD_DIR_LOCAL)/*.o $(TARGET)
 
 
 
