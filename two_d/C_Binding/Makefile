@@ -1,42 +1,52 @@
 
-
 NVCC = nvcc
-NFLAG =
+NFLAGS = -O2#-O0 -g -Wall -ggdb
 
 CC = gcc
 CFLAG = -O3#-O0 -g -Wall -ggdb
 
-SRC_DIR = src
-OBJ_DIR = obj
-$(shell mkdir -p $(OBJ_DIR))
 
-KERNEL_SRC = $(SRC_DIR)/utils.cu $(SRC_DIR)/init_kernel.cu $(SRC_DIR)/comp_kernel.cu $(SRC_DIR)/comm_kernel.cu
-KERNEL_OBJ = $(OBJ_DIR)/utils.o $(OBJ_DIR)/init_kernel.o $(OBJ_DIR)/comp_kernel.o $(OBJ_DIR)/comm_kernel.o
+PATH_CU = $(CuJac_PATH)/two_d
 
-MAIN_SRC = poisson.c
-MAIN_OBJ = $(OBJ_DIR)/poisson.o
+SRC_DIR = $(PATH_CU)/src_cu
+INC_DIR = $(PATH_CU)/include_cu
 
-OUTPUT = poisson
+SRC_DIR_LOCAL = src
+INC_DIR_LOCAL = include
+BIN_DIR_LOCAL = bin
+BUILD_DIR_LOCAL = build
+$(shell mkdir -p $(BIN_DIR_LOCAL))
+$(shell mkdir -p $(BUILD_DIR_LOCAL))
+
+
+KERNEL_SRC = $(wildcard $(SRC_DIR)/*.cu)
+KERNEL_OBJ = $(KERNEL_SRC:$(SRC_DIR)/%.cu=$(BUILD_DIR_LOCAL)/%.o)
+
+
+C_SRC_LOCAL = $(wildcard $(SRC_DIR_LOCAL)/*.c)
+C_OBJ_LOCAL = $(C_SRC_LOCAL:$(SRC_DIR_LOCAL)/%.c=$(BUILD_DIR_LOCAL)/%.o)
+
 
 CUDA_LIBS = -lcudart
 CUDA_LIBDIR = /usr/local/nvidia/nvhpc/Linux_aarch64/22.9/cuda/lib64
 CUDA_INCDIR = /usr/local/nvidia/nvhpc/Linux_aarch64/22.9/cuda/include
 
 
-TARGET: $(OUTPUT)
+TARGET = $(BIN_DIR_LOCAL)/poisson
 
-$(OUTPUT): $(KERNEL_OBJ) $(MAIN_OBJ) 
-	$(NVCC) $(MAIN_OBJ) $(KERNEL_OBJ) -o $(OUTPUT) $(CUDA_LIBS) -L$(CUDA_LIBDIR)
+$(TARGET): $(KERNEL_OBJ) $(C_OBJ_LOCAL)
+	$(NVCC) $(NFLAGS) $^ -o $@ $(CUDA_LIBS) -L$(CUDA_LIBDIR)
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cu
-	$(NVCC) $(NFLAG) -c $< -o $@
+$(BUILD_DIR_LOCAL)/%.o: $(SRC_DIR)/%.cu
+	$(NVCC) $(NFLAGS) -c $< -o $@ -I$(INC_DIR)
 
-$(MAIN_OBJ): $(MAIN_SRC)
-	$(CC) $(CFLAG) -I$(CUDA_INCDIR) -I$(SRC_DIR) -c $(MAIN_SRC) -o $(MAIN_OBJ)
+$(BUILD_DIR_LOCAL)/%.o: $(SRC_DIR_LOCAL)/%.c
+	$(CC) $(CFLAGS) -c $< -o $@ -I$(CUDA_INCDIR) -I$(INC_DIR) -I$(INC_DIR_LOCAL)
+
+
 
 .PHONY: clean
 clean:
-	rm -f $(OBJ_DIR)/*.o $(OUTPUT)
-
+	rm $(BUILD_DIR_LOCAL)/*.o $(BIN_DIR_LOCAL)/poisson
 
 

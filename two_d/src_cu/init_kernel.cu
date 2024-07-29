@@ -1,5 +1,5 @@
 
-__global__ void init(int ntx, int nty_local, int nWorkers, double *u) {
+__global__ void init_kernel(int ntx, int nty_local, int nWorkers, double *u) {
 
 
     int tid;
@@ -22,5 +22,12 @@ __global__ void init(int ntx, int nty_local, int nWorkers, double *u) {
 
         tid += blockDim.x * gridDim.x;
     }
+}
+
+
+extern "C" void init(int nBlocks, int blockSize, int ntx, int nty_local, int nWorkers, double *u) {
+
+    init_kernel<<<nBlocks, blockSize>>>(ntx, nty_local, nWorkers, u);
+
 }
 

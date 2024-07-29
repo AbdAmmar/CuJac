@@ -157,22 +157,22 @@ int main() {
 
 
 
-    init<<<nBlocks, blockSize>>>(ntx, nty_local, nWorkers, d_u);
+    init_kernel<<<nBlocks, blockSize>>>(ntx, nty_local, nWorkers, d_u);
     cudaDeviceSynchronize();
 
     it = 1;
     while(it <= it_max) {
 
         if(it%2 != 0) {
-            compute<<<nBlocks, blockSize>>>(ntx, nty, nty_local, nWorkers, h, d_u, d_unew);
+            compute_kernel<<<nBlocks, blockSize>>>(ntx, nty, nty_local, nWorkers, h, d_u, d_unew);
             cudaDeviceSynchronize();
         } else {
-            compute<<<nBlocks, blockSize>>>(ntx, nty, nty_local, nWorkers, h, d_unew, d_u);
+            compute_kernel<<<nBlocks, blockSize>>>(ntx, nty, nty_local, nWorkers, h, d_unew, d_u);
             cudaDeviceSynchronize();
         }
 
         if(it%it_print == 0) {
-            max_error<<<nBlocks, blockSize, size_err>>>(ntx, nty, nty_local, nWorkers, h, d_u, d_err);
+            max_error_kernel<<<nBlocks, blockSize, size_err>>>(ntx, nty, nty_local, nWorkers, h, d_u, d_err);
             cudaDeviceSynchronize();
             checkCudaErrors(cudaMemcpy(h_err, d_err, size_err, cudaMemcpyDeviceToHost), "cudaMemcpy");
             err = h_err[0];
