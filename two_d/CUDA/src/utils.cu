@@ -19,7 +19,7 @@ __global__ void max_error(int ntx, int nty, int nty_local, int nWorkers, double 
     int tid;
     int i, cacheIndex;
     int l, ll;
-    int j, jj0, jj1, jy;
+    int j, jj0, jj1;
 
     double x, y;
     double tmp, err_local;
@@ -32,15 +32,14 @@ __global__ void max_error(int ntx, int nty, int nty_local, int nWorkers, double 
     while (tid < nWorkers) {
 
         jj0 = nty_local * tid;
-        jy = jj0 - 2 * tid - 1;
 
-        for(j = 1; j < nty_local-1; j++) {
+        for(j = 0; j < nty_local; j++) {
 
-            y = (double) (jy + j) * h;
+            y = (double) (jj0 + j) * h;
 
             jj1 = (jj0 + j) * ntx;
 
-            for(l = 1; l < ntx-1; l++) {
+            for(l = 0; l < ntx; l++) {
 
                 x = (double) l * h;
 

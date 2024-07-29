@@ -1,7 +1,9 @@
 
 poisson
 *.o
+*.so
 slurm-*
 *.mod
 
 RES/
+BUILD/

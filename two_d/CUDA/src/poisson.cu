@@ -6,8 +6,6 @@
 #include "utils.cuh"
 #include "init_kernel.cuh"
 #include "comp_kernel.cuh"
-#include "comm_kernel.cuh"
-
 
 
 
@@ -126,8 +124,8 @@ int main() {
 
 
     ntx = n;
-    nty = n + 2 * nWorkers;
-    nty_local = n / nWorkers + 2;
+    nty = n;
+    nty_local = n / nWorkers;
 
     printf("ntx = %d\n", ntx);
     printf("nty = %d\n", nty);
@@ -168,12 +166,8 @@ int main() {
         if(it%2 != 0) {
             compute<<<nBlocks, blockSize>>>(ntx, nty, nty_local, nWorkers, h, d_u, d_unew);
             cudaDeviceSynchronize();
-            communication<<<nBlocks, blockSize>>>(ntx, nty_local, nWorkers, d_unew);
-            cudaDeviceSynchronize();
         } else {
             compute<<<nBlocks, blockSize>>>(ntx, nty, nty_local, nWorkers, h, d_unew, d_u);
-            cudaDeviceSynchronize();
-            communication<<<nBlocks, blockSize>>>(ntx, nty_local, nWorkers, d_u);
             cudaDeviceSynchronize();
         }
 
