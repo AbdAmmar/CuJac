@@ -8,6 +8,9 @@ __global__ void compute_2d_kernel(int ntx, int nty, int ntx_local, int nty_local
     int js, je, jj_check;
     int is, ie, ii_check;
 
+    int jjs, jje;
+    int iis, iie;
+
     int j, jj0, jj1;
     int i, ii0;
     int ll;
@@ -60,6 +63,9 @@ __global__ void compute_2d_kernel(int ntx, int nty, int ntx_local, int nty_local
             //do_bc_bottom = 1;
         }
 
+        jjs = jj0 + js; 
+        jje = jj0 + je;
+
         while (tid_x < nWorkers_x) {
 
             ii0 = ntx_local * tid_x;
@@ -71,15 +77,17 @@ __global__ void compute_2d_kernel(int ntx, int nty, int ntx_local, int nty_local
                 //do_bc_right = 1;
             }
 
-    
-            for(j = jj0 + js; j < jj0 + je; j++) {
+            iis = ii0 + is; 
+            iie = ii0 + ie;
+
+            for(j = jjs; j < jje; j++) {
             
                 y = (double) j * h;
                 y_tmp = y * (y - 1.0);
             
                 jj1 = j * ntx;
             
-                for(i = ii0 + is; i < ii0 + ie; i++) {
+                for(i = iis; i < iie; i++) {
             
                     x = (double) i * h;
             
