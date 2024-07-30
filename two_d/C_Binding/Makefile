@@ -28,8 +28,6 @@ C_OBJ_LOCAL = $(C_SRC_LOCAL:$(SRC_DIR_LOCAL)/%.c=$(BUILD_DIR_LOCAL)/%.o)
 
 
 CUDA_LIBS = -lcudart
-#CUDA_LIBDIR = /usr/local/nvidia/nvhpc/Linux_aarch64/22.9/cuda/lib64
-#CUDA_INCDIR = /usr/local/nvidia/nvhpc/Linux_aarch64/22.9/cuda/include
 
 
 
@@ -37,15 +35,12 @@ TARGET = $(BIN_DIR_LOCAL)/poisson
 
 $(TARGET): $(KERNEL_OBJ) $(C_OBJ_LOCAL)
 	$(NVCC) $(NFLAGS) $^ -o $@ $(CUDA_LIBS)
-	#$(NVCC) $(NFLAGS) $^ -o $@ $(CUDA_LIBS) -L$(CUDA_LIBDIR)
 
 $(BUILD_DIR_LOCAL)/%.o: $(SRC_DIR)/%.cu
 	$(NVCC) $(NFLAGS) -c $< -o $@ -I$(INC_DIR)
 
 $(BUILD_DIR_LOCAL)/%.o: $(SRC_DIR_LOCAL)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@ -I$(INC_DIR) -I$(INC_DIR_LOCAL)
-	#$(CC) $(CFLAGS) -c $< -o $@ -I$(CUDA_INCDIR) -I$(INC_DIR) -I$(INC_DIR_LOCAL)
-
 
 
 .PHONY: clean
