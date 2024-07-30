@@ -172,8 +172,12 @@ int main() {
     printf("Size of d_err = %zu Bytes \n\n", size_err);
 
     checkCudaErrors(cudaMalloc(&d_u, size_u), "cudaMalloc");
+
     checkCudaErrors(cudaMalloc(&d_unew, size_u), "cudaMalloc");
+
     checkCudaErrors(cudaMalloc(&d_err, size_err), "cudaMalloc");
+
+
 
     h_err = (double*) malloc(size_err);
     if(h_err == NULL) {
@@ -188,6 +192,7 @@ int main() {
 
     init_2d_kernel<<<dimGrid, dimBlock>>>(ntx, ntx_local, nty_local, nWorkers_x, nWorkers_y, d_u);
     cudaDeviceSynchronize();
+
 
     it = 1;
     while(it <= it_max) {

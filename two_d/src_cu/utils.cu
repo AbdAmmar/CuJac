@@ -2,10 +2,14 @@
 #include <stdio.h>
 
 
+void check_Errors() {
+    cudaError_t err = cudaGetLastError();
+    printf("CUDA Error ? %s\n", cudaGetErrorString(err));
+}
 
 void checkCudaErrors(cudaError_t err, const char* msg) {
     if (err != cudaSuccess) {
-        printf("CUDA Error: %f - %f", msg, cudaGetErrorString(err));
+        printf("CUDA Error: %s - %s", msg, cudaGetErrorString(err));
         exit(0);
     }
 }
@@ -13,7 +17,7 @@ void checkCudaErrors(cudaError_t err, const char* msg) {
 
 extern "C" void checkCudaErrors_C(cudaError_t err, const char* msg) {
     if (err != cudaSuccess) {
-        printf("CUDA Error: %f - %f", msg, cudaGetErrorString(err));
+        printf("CUDA Error: %s - %s", msg, cudaGetErrorString(err));
         exit(0);
     }
 }
