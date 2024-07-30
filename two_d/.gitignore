@@ -1,9 +1,7 @@
 
-poisson
-*.o
-*.so
 slurm-*
-*.mod
 
 RES/
-BUILD/
+
+build
+bin

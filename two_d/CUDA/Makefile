@@ -15,26 +15,45 @@ $(shell mkdir -p $(BIN_DIR_LOCAL))
 $(shell mkdir -p $(BUILD_DIR_LOCAL))
 
 
-KERNEL_SRC = $(wildcard $(SRC_DIR)/*.cu)
-KERNEL_OBJ = $(KERNEL_SRC:$(SRC_DIR)/%.cu=$(BUILD_DIR_LOCAL)/%.o)
+#KERNEL_SRC = $(wildcard $(SRC_DIR)/*.cu)
+#KERNEL_OBJ = $(KERNEL_SRC:$(SRC_DIR)/%.cu=$(BUILD_DIR_LOCAL)/%.o)
+
+#KERNEL_SRC_LOCAL = $(wildcard $(SRC_DIR_LOCAL)/*.cu)
+#KERNEL_OBJ_LOCAL = $(KERNEL_SRC_LOCAL:$(SRC_DIR_LOCAL)/%.cu=$(BUILD_DIR_LOCAL)/%.o)
+
+TARGET1 = poisson
+TARGET2 = poisson_2d
 
 
-KERNEL_SRC_LOCAL = $(wildcard $(SRC_DIR_LOCAL)/*.cu)
-KERNEL_OBJ_LOCAL = $(KERNEL_SRC_LOCAL:$(SRC_DIR_LOCAL)/%.cu=$(BUILD_DIR_LOCAL)/%.o)
+
+all: $(TARGET1) $(TARGET2)
 
 
-TARGET = $(BIN_DIR_LOCAL)/poisson
 
-$(TARGET): $(KERNEL_OBJ) $(KERNEL_OBJ_LOCAL)
-	$(NVCC) $(NFLAGS) $^ -o $@
-
-$(BUILD_DIR_LOCAL)/%.o: $(SRC_DIR)/%.cu
-	$(NVCC) $(NFLAGS) -c $< -o $@ -I$(INC_DIR)
-
-$(BUILD_DIR_LOCAL)/%.o: $(SRC_DIR_LOCAL)/%.cu
+$(TARGET1): $(SRC_DIR)/utils.cu $(SRC_DIR)/comp_kernel.cu $(SRC_DIR)/init_kernel.cu $(SRC_DIR_LOCAL)/poisson.cu
+	$(NVCC) $(NFLAGS) $^ -o $(BIN_DIR_LOCAL)/$(TARGET1) -I$(INC_DIR)
+$(SRC_DIR)/comp_kernel.o: $(SRC_DIR)/comp_kernel.cu
+	$(NVCC) $(NFLAGS) -c $< -o $@
+$(BUILD_DIR_LOCAL)/poisson.o: $(SRC_DIR_LOCAL)/poisson.cu
 	$(NVCC) $(NFLAGS) -c $< -o $@ -I$(INC_DIR) -I$(INC_DIR_LOCAL)
+$(SRC_DIR)/init_kernel.o: $(SRC_DIR)/init_kernel.cu
+	$(NVCC) $(NFLAGS) -c $< -o $@
+
+
+$(TARGET2): $(SRC_DIR)/utils.cu $(SRC_DIR)/comp_kernel_2d.cu $(SRC_DIR)/init_kernel_2d.cu $(SRC_DIR_LOCAL)/poisson_2d.cu
+	$(NVCC) $(NFLAGS) $^ -o $(BIN_DIR_LOCAL)/$(TARGET2) -I$(INC_DIR)
+$(SRC_DIR)/comp_kernel_2d.o: $(SRC_DIR)/comp_kernel_2d.cu
+	$(NVCC) $(NFLAGS) -c $< -o $@
+$(BUILD_DIR_LOCAL)/poisson_2d.o: $(SRC_DIR_LOCAL)/poisson_2d.cu
+	$(NVCC) $(NFLAGS) -c $< -o $@ -I$(INC_DIR) -I$(INC_DIR_LOCAL)
+$(SRC_DIR)/init_kernel_2d.o: $(SRC_DIR)/init_kernel_2d.cu
+	$(NVCC) $(NFLAGS) -c $< -o $@
+
+
+$(SRC_DIR)/utils.o: $(SRC_DIR)/utils.cu
+	$(NVCC) $(NFLAGS) -c $< -o $@
 
 
 .PHONY: clean
 clean:
-	rm $(BUILD_DIR_LOCAL)/*.o $(BIN_DIR_LOCAL)/poisson
+	rm -f $(BUILD_DIR_LOCAL)/*.o $(BIN_DIR_LOCAL)/*

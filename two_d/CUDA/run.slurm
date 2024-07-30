@@ -26,7 +26,8 @@ nvidia-smi
 #export CUDA_VISIBLE_DEVICES=0,1
 
 #nsys profile --trace=cuda,nvtx,mpi ./poisson
-time ./bin/poisson
+#time ./bin/poisson
+time ./bin/poisson_2d
 #mpirun -n ${SLURM_NTASKS} --map-by ppr:${SLURM_TASKS_PER_NODE}:node:PE=1 --bind-to core ./jacobi
 
 
