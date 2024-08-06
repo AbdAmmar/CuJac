@@ -1,4 +1,4 @@
-# GPU-Accelerated 2D Poisson's Equation Solver using Finite Difference Method
+# GPU-Accelerated 2D Poisson's Equation Solver
 
 ## Table of Contents
 - [Introduction](#introduction)
