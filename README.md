@@ -1,4 +1,4 @@
-# GPU-Accelerated Poisson's Equation Solver using Finite Difference Method
+# GPU-Accelerated Poisson's Equation Solver
 
 This project provides a CUDA-accelerated implementation of the finite difference method to solve Poisson's equation in 2D. 
 The code is optimized to run on NVIDIA GPUs, leveraging the parallel processing power of CUDA. Additionally, bindings in C 
