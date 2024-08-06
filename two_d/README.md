@@ -1,4 +1,4 @@
-# GPU-Accelerated 2D Heat Equation Solver using Finite Difference Method
+# GPU-Accelerated 2D Poisson's Equation Solver using Finite Difference Method
 
 ## Table of Contents
 - [Introduction](#introduction)
@@ -6,7 +6,7 @@
 
 ## Introduction
 
-This project addresses the 2D heat equation, a common partial differential equation (PDE) used to describe heat distribution over a spatial domain. 
+This project addresses the 2D Poisson's equation, a common partial differential equation (PDE) used to describe heat distribution over a spatial domain. 
 We focus on solving the problem using the finite difference method.
 
 ### Problem Statement
