@@ -1,6 +1,6 @@
-2048      # n
-64        # nBlocks (x)
-64        # nBlocks (y)
+4800      # n
+150       # nBlocks (x)
+150       # nBlocks (y)
 32        # blockSize (x)
 32        # blockSize (y)
 10000     # it_max

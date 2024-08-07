@@ -40,9 +40,16 @@ int main() {
     int nDevices;
     cudaDeviceProp prop;
 
+    cudaEvent_t start, stop;
+    float tt;
+
+    checkCudaErrors(cudaEventCreate(&start), "cudaEventCreate", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventCreate(&stop), "cudaEventCreate",  __FILE__, __LINE__);
+
+    checkCudaErrors(cudaEventRecord(start), "cudaEventRecord", __FILE__, __LINE__);
 
     nDevices = 0;
-    checkCudaErrors(cudaGetDeviceCount(&nDevices), "cudaGetDeviceCount)");
+    checkCudaErrors(cudaGetDeviceCount(&nDevices), "cudaGetDeviceCount)", __FILE__, __LINE__);
     if(nDevices == 0) {
         printf("no available GPU(s)\n");
         exit(0);
@@ -50,7 +57,7 @@ int main() {
         printf("Detected %d GPU(s)\n", nDevices);
     }
     for (i = 0; i < nDevices; i++) {
-        cudaGetDeviceProperties(&prop, i);
+        checkCudaErrors(cudaGetDeviceProperties(&prop, i), "cudaGetDeviceProperties", __FILE__, __LINE__);
         printf("\nDevice %d/%d: \"%s\"\n", i+1, nDevices, prop.name);
         printf("  Compute capability: %d.%d\n", prop.major, prop.minor);
         printf("  Memory Clock Rate (GHz): %f\n", prop.memoryClockRate/1.0e6);
@@ -118,7 +125,6 @@ int main() {
     }
     fclose(fptr);
 
-
     L = 1.0;
     h = L / (double) (n-1);
 
@@ -166,16 +172,15 @@ int main() {
 
 
     size_u = ntx * nty * sizeof(double);
-    printf("Size of d_u = %zu Bytes \n\n", size_u);
+    printf("Size of d_u = %.2f MB \n\n", (double)size_u/(1024.0*1024.0));
 
     size_err = nyBlocks * sizeof(double);
-    printf("Size of d_err = %zu Bytes \n\n", size_err);
 
-    checkCudaErrors(cudaMalloc(&d_u, size_u), "cudaMalloc");
+    checkCudaErrors(cudaMalloc(&d_u, size_u), "cudaMalloc", __FILE__, __LINE__);
 
-    checkCudaErrors(cudaMalloc(&d_unew, size_u), "cudaMalloc");
+    checkCudaErrors(cudaMalloc(&d_unew, size_u), "cudaMalloc", __FILE__, __LINE__);
 
-    checkCudaErrors(cudaMalloc(&d_err, size_err), "cudaMalloc");
+    checkCudaErrors(cudaMalloc(&d_err, size_err), "cudaMalloc", __FILE__, __LINE__);
 
 
 
@@ -191,7 +196,8 @@ int main() {
 
 
     init_2d_kernel<<<dimGrid, dimBlock>>>(ntx, ntx_local, nty_local, nWorkers_x, nWorkers_y, d_u);
-    cudaDeviceSynchronize();
+    checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
+    checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
 
 
     it = 1;
@@ -199,16 +205,19 @@ int main() {
 
         if(it%2 != 0) {
             compute_2d_kernel<<<dimGrid, dimBlock>>>(ntx, nty, ntx_local, nty_local, nWorkers_x, nWorkers_y, h, d_u, d_unew);
-            cudaDeviceSynchronize();
+            checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
+            checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
         } else {
             compute_2d_kernel<<<dimGrid, dimBlock>>>(ntx, nty, ntx_local, nty_local, nWorkers_x, nWorkers_y, h, d_unew, d_u);
-            cudaDeviceSynchronize();
+            checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
+            checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
         }
 
         if(it%it_print == 0) {
             max_error_kernel<<<nyBlocks, blockySize, size_err>>>(ntx, nty, nty_local, nWorkers_y, h, d_u, d_err);
-            cudaDeviceSynchronize();
-            checkCudaErrors(cudaMemcpy(h_err, d_err, size_err, cudaMemcpyDeviceToHost), "cudaMemcpy");
+            checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
+            checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
+            checkCudaErrors(cudaMemcpy(h_err, d_err, size_err, cudaMemcpyDeviceToHost), "cudaMemcpy", __FILE__, __LINE__);
             err = h_err[0];
             for (i = 1; i < nyBlocks; i++) {
                 if(err < h_err[i]) {
@@ -224,9 +233,15 @@ int main() {
     free(h_err);
 
 
-    cudaFree(d_u);
-    cudaFree(d_unew);
-    cudaFree(d_err);
+    checkCudaErrors(cudaFree(d_u), "cudaFree", __FILE__, __LINE__);
+    checkCudaErrors(cudaFree(d_unew), "cudaFree", __FILE__, __LINE__);
+    checkCudaErrors(cudaFree(d_err), "cudaFree", __FILE__, __LINE__);
+
+    checkCudaErrors(cudaEventRecord(stop), "cudaEventRecord", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventSynchronize(stop), "cudaEventSynchronize", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventElapsedTime(&tt, start, stop), "cudaEventElapsedTime", __FILE__, __LINE__);
+
+    printf("Ellapsed time = %.3f sec", tt / 1000.0f);
 
     return 0;
 }

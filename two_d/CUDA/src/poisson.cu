@@ -40,7 +40,7 @@ int main() {
 
 
     nDevices = 0;
-    checkCudaErrors(cudaGetDeviceCount(&nDevices), "cudaGetDeviceCount)");
+    checkCudaErrors(cudaGetDeviceCount(&nDevices), "cudaGetDeviceCount)", __FILE__, __LINE__);
     if(nDevices == 0) {
         printf("no available GPU(s)\n");
         exit(0);
@@ -143,9 +143,9 @@ int main() {
     size_err = nBlocks * sizeof(double);
     printf("Size of d_err = %zu Bytes \n\n", size_err);
 
-    checkCudaErrors(cudaMalloc(&d_u, size_u), "cudaMalloc");
-    checkCudaErrors(cudaMalloc(&d_unew, size_u), "cudaMalloc");
-    checkCudaErrors(cudaMalloc(&d_err, size_err), "cudaMalloc");
+    checkCudaErrors(cudaMalloc(&d_u, size_u), "cudaMalloc", __FILE__, __LINE__);
+    checkCudaErrors(cudaMalloc(&d_unew, size_u), "cudaMalloc", __FILE__, __LINE__);
+    checkCudaErrors(cudaMalloc(&d_err, size_err), "cudaMalloc", __FILE__, __LINE__);
 
     h_err = (double*) malloc(size_err);
     if(h_err == NULL) {
@@ -174,7 +174,7 @@ int main() {
         if(it%it_print == 0) {
             max_error_kernel<<<nBlocks, blockSize, size_err>>>(ntx, nty, nty_local, nWorkers, h, d_u, d_err);
             cudaDeviceSynchronize();
-            checkCudaErrors(cudaMemcpy(h_err, d_err, size_err, cudaMemcpyDeviceToHost), "cudaMemcpy");
+            checkCudaErrors(cudaMemcpy(h_err, d_err, size_err, cudaMemcpyDeviceToHost), "cudaMemcpy", __FILE__, __LINE__);
             err = h_err[0];
             for (i = 1; i < nBlocks; i++) {
                 if(err < h_err[i]) {
@@ -194,7 +194,7 @@ int main() {
     //    fprintf(stderr, "Memory allocation failed for h_u\n");
     //    exit(0);
     //}
-    //checkCudaErrors(cudaMemcpy(h_u, d_unew, size_u, cudaMemcpyDeviceToHost), "cudaMemcpy");
+    //checkCudaErrors(cudaMemcpy(h_u, d_unew, size_u, cudaMemcpyDeviceToHost), "cudaMemcpy", __FILE__, __LINE__);
     //for(l = 0; l < nWorkers; l++){
     //    jj0 = l * nty_local;
     //    for (j = 1; j < nty_local-1; j++) {

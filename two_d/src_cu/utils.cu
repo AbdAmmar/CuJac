@@ -7,9 +7,10 @@ void check_Errors() {
     printf("CUDA Error ? %s\n", cudaGetErrorString(err));
 }
 
-void checkCudaErrors(cudaError_t err, const char* msg) {
+void checkCudaErrors(cudaError_t err, const char* msg, const char* file, int line) {
     if (err != cudaSuccess) {
-        printf("CUDA Error: %s - %s", msg, cudaGetErrorString(err));
+        printf("CUDA Error in %s at line %d\n", file, line);
+        printf("%s - %s\n", msg, cudaGetErrorString(err));
         exit(0);
     }
 }
